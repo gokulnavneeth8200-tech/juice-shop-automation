@@ -101,7 +101,6 @@ test('Complete shopping flow - Add product, checkout, add address, delivery, and
       randomCard.cardNumber,
       randomCard.expiryMonth,
       randomCard.expiryYear,
-      randomCard.cvv
     );
     await paymentPage.submitCardDetails();
     // Verify card was added successfully
