@@ -11,7 +11,7 @@ test('Create new user and store credentials', async ({ page }) => {
 
   const homePage = new HomePage(page);
   const loginPage = new LoginPage(page);
-  const registrationPage = new RegistrationPage(page);
+  const registrationPage = new RegistrationPage(page); 
 
   const newUser = {
     email: `gokul${Date.now()}@juiceshop.com`,
