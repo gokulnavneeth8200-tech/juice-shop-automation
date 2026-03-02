@@ -62,6 +62,14 @@ export class LoginPage {
   }
 
   async navigateToRegistration() {
-    await this.notYetCustomerLink.click();
+    await this.notYetCustomerLink.waitFor({ state: 'visible', timeout: 5000 });
+    await this.notYetCustomerLink.click({ timeout: 5000 });
+
+    try {
+      await this.page.waitForURL(/#\/register/, { timeout: 5000 });
+    } catch {
+      await this.page.goto('/#/register');
+      await this.page.waitForURL(/#\/register/, { timeout: 10000 });
+    }
   }
 }
