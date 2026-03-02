@@ -36,7 +36,6 @@ export class PaymentPage {
     cardNumber: string,
     expiryMonth: string,
     expiryYear: string,
-    cvv: string
   ) {
     // Fill name on card
     await this.nameOnCardInput.waitFor({ state: 'visible', timeout: 10000 });

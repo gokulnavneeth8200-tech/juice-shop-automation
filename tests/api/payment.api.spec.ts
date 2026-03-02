@@ -4,17 +4,44 @@ import user from '../../test-data/new-user.json';
 
 let authToken: string;
 let userId: string;
+const baseUrl = 'http://localhost:3000';
+
+async function loginAndGetToken(request: any, email: string, password: string) {
+  return request.post(`${baseUrl}/rest/user/login`, {
+    data: {
+      email,
+      password
+    }
+  });
+}
 
 test.describe('Payment API Tests', () => {
   
   test.beforeAll(async ({ request }) => {
-    // Login via API to get authentication token
-    const loginResponse = await request.post('http://localhost:3000/rest/user/login', {
-      data: {
-        email: user.email,
-        password: user.password
-      }
-    });
+    let loginResponse = await loginAndGetToken(request, user.email, user.password);
+
+    if (!loginResponse.ok()) {
+      const fallbackUser = {
+        email: `api.user.${Date.now()}@juiceshop.com`,
+        password: 'Qwerty@123',
+        passwordRepeat: 'Qwerty@123',
+        securityQuestion: {
+          id: 1,
+          question: 'Your eldest siblings middle name?'
+        },
+        securityAnswer: 'MyAnswer'
+      };
+
+      const createUserResponse = await request.post(`${baseUrl}/api/Users`, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: fallbackUser
+      });
+
+      expect([200, 201]).toContain(createUserResponse.status());
+      loginResponse = await loginAndGetToken(request, fallbackUser.email, fallbackUser.password);
+    }
 
     expect(loginResponse.ok()).toBeTruthy();
     const loginData = await loginResponse.json();
@@ -24,7 +51,7 @@ test.describe('Payment API Tests', () => {
     const tokenPayload = JSON.parse(Buffer.from(authToken.split('.')[1], 'base64').toString());
     userId = tokenPayload.data.id;
     
-    console.log('✅ API Authentication successful');
+    console.log('API Authentication successful');
   });
 
   test('Add unique card details via API', async ({ request }) => {
@@ -40,7 +67,7 @@ test.describe('Payment API Tests', () => {
     };
 
     // Add card via API
-    const addCardResponse = await request.post('http://localhost:3000/api/Cards', {
+    const addCardResponse = await request.post(`${baseUrl}/api/Cards`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
@@ -59,10 +86,10 @@ test.describe('Payment API Tests', () => {
     expect(cardData.data.expMonth).toBe(uniqueCardDetails.expMonth);
     expect(cardData.data.expYear).toBe(uniqueCardDetails.expYear);
     
-    console.log('✅ Card added successfully via API:', cardData.data.id);
+    console.log('Card added successfully via API:', cardData.data.id);
 
     // Verify by fetching all cards
-    const getAllCardsResponse = await request.get('http://localhost:3000/api/Cards', {
+    const getAllCardsResponse = await request.get(`${baseUrl}/api/Cards`, {
       headers: {
         'Authorization': `Bearer ${authToken}`
       }
@@ -76,7 +103,7 @@ test.describe('Payment API Tests', () => {
     expect(addedCard).toBeDefined();
     expect(addedCard.fullName).toBe(uniqueCardDetails.fullName);
     
-    console.log('✅ Card verified in the list of all cards');
+    console.log(' Card verified in the list of all cards');
   });
 
   test('Add multiple unique cards via API', async ({ request }) => {
@@ -93,7 +120,7 @@ test.describe('Payment API Tests', () => {
         expYear: parseInt(cardDetails.expiryYear)
       };
 
-      const addCardResponse = await request.post('http://localhost:3000/api/Cards', {
+      const addCardResponse = await request.post(`${baseUrl}/api/Cards`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -105,7 +132,7 @@ test.describe('Payment API Tests', () => {
       const cardData = await addCardResponse.json();
       addedCardIds.push(cardData.data.id);
       
-      console.log(`✅ Card ${i + 1}/${cardsToAdd} added: ${cardData.data.id}`);
+      console.log(`Card ${i + 1}/${cardsToAdd} added: ${cardData.data.id}`);
       
       // Small delay between requests
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -113,7 +140,7 @@ test.describe('Payment API Tests', () => {
 
     // Verify all cards were added
     expect(addedCardIds).toHaveLength(cardsToAdd);
-    console.log(`✅ Successfully added ${cardsToAdd} unique cards via API`);
+    console.log(` Successfully added ${cardsToAdd} unique cards via API`);
   });
 
   test('Validate card number format via API', async ({ request }) => {
@@ -125,7 +152,7 @@ test.describe('Payment API Tests', () => {
       expYear: 2080
     };
 
-    const addCardResponse = await request.post('http://localhost:3000/api/Cards', {
+    const addCardResponse = await request.post(`${baseUrl}/api/Cards`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
@@ -136,6 +163,6 @@ test.describe('Payment API Tests', () => {
     // This might succeed or fail depending on Juice Shop validation
     // Adjust expectation based on actual API behavior
     const cardData = await addCardResponse.json();
-    console.log('📋 API response for invalid card:', cardData);
+    console.log(' API response for invalid card:', cardData);
   });
 });
