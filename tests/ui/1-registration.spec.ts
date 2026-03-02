@@ -38,6 +38,6 @@ test('Create new user and store credentials', async ({ page }) => {
     'MyAnswer'
   );
 
-  // ✅ Save credentials
+  //Save credentials
   saveUserCredentials(newUser);
 });
